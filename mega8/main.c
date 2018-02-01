@@ -6,26 +6,25 @@ int main(void)
    unsigned int adc_value; // Variable to hold ADC result
    DDRB=0xff; // Set Port D as Output
    DDRD=0xFF;
-   PORTB = 0x00;
-   PORTD = 0b01010101;
-   DDRC = 0b00000001;
-   ADCSRA = (1<<ADEN) | (1<<ADPS2) | (1<<ADPS0);
-   // ADEN: Set to turn on ADC , by default it is turned off
-   //ADPS2: ADPS2 and ADPS0 set to make division factor 32
-   ADMUX=0x05; // ADC input channel set to PC5
+   PORTD = 0x00;
+   DDRC = 0x00;
+   PORTC = 0x01;
+
+   //Nastavenie ADC
+   ADCSRA = (1<<ADPS1) | (1<<ADPS0); //Set divisor to 011 which is 8
+   ADMUX |= 0x05; //nastavit adc na port pC5
+   ADMUX |= (1 << REFS0); //Ako maximalne napatie puzit VCC namiesto AREF
+   ADMUX |= (1 << ADLAR); //Pouzit 8 bitov namiesto 10
+   //ADCSRA |= (1 << ADFR);  // Set ADC to Free-Running Mode
+   ADCSRA |= (1 << ADEN);  // Enable ADC
    while (1)
    {
-      ADCSRA |= (1<<ADSC); // Start conversion
-         while (ADCSRA & (1<<ADSC)); // wait for conversion to complete
-      adc_value = ADCW / 4; //Store ADC value
-      PORTB = adc_value;
-      if(PINC & 0x01 == 0x01){
-         unsigned int rnd_max = adc_value / 4;
-	 PORTB = 0x00;
-	 _delay_ms(500);
-	 PORTB = (int)((double)rand() / ((double)RAND_MAX + 1) * 
-rnd_max);
-	 _delay_ms(1000);
-      }
+      ADCSRA |= (1 << ADSC);  // Start A2D Conversions
+      while (ADCSRA & (1<<ADSC)){}
+      int temp = ADCH;
+      temp = temp % 2;
+      temp = temp >> 255;
+      PORTB = temp;
+      _delay_ms(50);
    }
 }
